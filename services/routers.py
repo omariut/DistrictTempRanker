@@ -13,7 +13,7 @@ service_routers = APIRouter(
 
 
 async def get_weather_api(longitude, latitude):
-    return "https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true&hourly=temperature_2m"
+    return f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true&hourly=temperature_2m"
 
 
 async def fetch_url(session, url):
@@ -22,10 +22,7 @@ async def fetch_url(session, url):
 
 
 async def get_district_temps():
-    urls = [
-        await get_weather_api(item["longitude"], item["latitude"])
-        for item in district_data
-    ]
+    urls = [await get_weather_api(item["long"], item["lat"]) for item in district_data]
     async with aiohttp.ClientSession() as session:
         tasks = [fetch_url(session, url) for url in urls]
         responses = await asyncio.gather(*tasks)
