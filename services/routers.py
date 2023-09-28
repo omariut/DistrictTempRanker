@@ -40,23 +40,15 @@ async def travel_advice(
 ):
     try:
         end_date = await utils.get_end_date(travel_date)
-        url_to_get_user_temperature = await utils.get_weather_api(
+        user_temperature = await utils.get_temperature(
             user_longitude, user_latitude, start_date=travel_date, end_date=end_date
         )
-        url_to_get_destination_temperature = await utils.get_weather_api(
+        destination_temperature = await utils.get_temperature(
             destination_longitude,
             destination_latitude,
             start_date=travel_date,
             end_date=end_date,
         )
-
-        async with aiohttp.ClientSession() as session:
-            user_temperature = await utils.fetch_url(
-                session, url_to_get_user_temperature
-            )
-            destination_temperature = await utils.fetch_url(
-                session, url_to_get_destination_temperature
-            )
 
         if user_temperature is None or destination_temperature is None:
             return {
@@ -68,22 +60,9 @@ async def travel_advice(
             destination_temperature
         )
 
-        if user_location_avg_temp < destination_avg_temp:
-            base_url = f"http://{request.client.host}:{await utils.get_port(request)}"
-
-            recommendation = (
-                "If you're looking for cooler temperatures, "
-                f"it's actually warmer at the destination. "
-                "You might want to consider other options if you prefer cooler weather. "
-                f"Check out the coolest districts here: {base_url}/coolest-districts/ and choose a place to travel."
-            )
-
-        elif user_location_avg_temp > destination_avg_temp:
-            recommendation = (
-                "It's cooler at the destination. Might be a good place to travel."
-            )
-        else:
-            recommendation = "Temperatures are similar!"
+        recommendation = await utils.get_recommendation(
+            user_location_avg_temp, destination_avg_temp, request
+        )
 
         return {
             "user_temperature_2pm": user_location_avg_temp,

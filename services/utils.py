@@ -30,11 +30,7 @@ async def fetch_url(session, url):
         return await response.json()
 
 
-async def get_district_temps():
-    # Create a list of weather API URLs for each district
-    # Instead of API calling district data are collected from a file as the data is fixed and it improves performance
-    urls = [await get_weather_api(item["long"], item["lat"]) for item in district_data]
-
+async def fetch_multiple_urls(urls):
     async with aiohttp.ClientSession() as session:
 
         tasks = [fetch_url(session, url) for url in urls]
@@ -44,7 +40,25 @@ async def get_district_temps():
     return responses
 
 
+async def fetch_single_url(url):
+    async with aiohttp.ClientSession() as session:
+        return await fetch_url(session, url)
+
+
+async def get_temperature(longitude, latitude, start_date, end_date):
+    url = await get_weather_api(longitude, latitude, start_date, end_date)
+    return await fetch_single_url(url)
+
+
+async def get_district_temps():
+    # Create a list of weather API URLs for each district
+    # Instead of API calling district data are collected from a file as the data is fixed and it improves performance
+    urls = [await get_weather_api(item["long"], item["lat"]) for item in district_data]
+    return await fetch_multiple_urls(urls)
+
+
 async def get_location_avg_temp(response_data):
+    print(response_data)
     temps_list = response_data["hourly"]["temperature_2m"]
 
     # Extract temperatures at 2 PM for the next 7 days
@@ -84,3 +98,24 @@ async def get_port(request: Request):
     server_info = scope.get("server", {})
     port = server_info[-1]  # Extract the port information from the server scope
     return port  # Return the port information
+
+
+async def get_recommendation(user_location_avg_temp, destination_avg_temp, request):
+    if user_location_avg_temp < destination_avg_temp:
+        base_url = f"http://{request.client.host}:{await get_port(request)}"
+
+        recommendation = (
+            "If you're looking for cooler temperatures, "
+            f"it's actually warmer at the destination. "
+            "You might want to consider other options if you prefer cooler weather. "
+            f"Check out the coolest districts here: {base_url}/coolest-districts/ and choose a place to travel."
+        )
+
+    elif user_location_avg_temp > destination_avg_temp:
+        recommendation = (
+            "It's cooler at the destination. Might be a good place to travel."
+        )
+    else:
+        recommendation = "Temperatures are similar!"
+
+    return recommendation
