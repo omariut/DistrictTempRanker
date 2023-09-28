@@ -8,19 +8,24 @@ service_routers = APIRouter(
 )
 
 
-@service_routers.get("/coolest-districts/")
+@service_routers.get("/coolest-districts")
 async def get_ten_coolest_dist():
     responses = await utils.get_district_temps()
-    avg_district_temps = {
-        str(response_data["longitude"])
-        + "-"
-        + str(response_data["latitude"]): await utils.get_location_avg_temp(
-            response_data
-        )
+
+    avg_district_temps = [
+        {
+            "longitude": response_data["longitude"],
+            "latitude": response_data["latitude"],
+            "avg_temperature": await utils.get_location_avg_temp(response_data),
+        }
         for response_data in responses
-    }
-    sorted_avg_district_temps = sorted(avg_district_temps.items(), key=lambda x: x[1])
-    ten_coolest_district = {item[0]: item[1] for item in sorted_avg_district_temps[:10]}
+    ]
+
+    sorted_avg_district_temps = sorted(
+        avg_district_temps, key=lambda x: x["avg_temperature"]
+    )
+    ten_coolest_district = sorted_avg_district_temps[:10]
+
     return ten_coolest_district
 
 
