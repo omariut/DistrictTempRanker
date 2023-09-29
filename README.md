@@ -7,7 +7,7 @@ District Temp Ranker is a FastAPI project that provides APIs for retrieving info
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-- [Running the Project](#running-the-project)
+
 - [API Endpoints](#api-endpoints)
   - [1. Get Coolest Districts](#1-get-coolest-districts)
   - [2. Travel Advice](#2-travel-advice)
